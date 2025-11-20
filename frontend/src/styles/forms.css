@@ -6,7 +6,8 @@
 
 .form-row {
   display: flex;
-  gap: 10px;
+  gap: 15px;
+  width: 100%;
 }
 
 .flex-2 { flex: 2; }
@@ -14,9 +15,11 @@
 input, select {
   padding: 12px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  flex: 1;
+  border-radius: 8px;
   font-size: 16px;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 input:focus, select:focus {
@@ -29,27 +32,40 @@ button[type="submit"], .btn-primary {
   color: white;
   border: none;
   padding: 12px 20px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
-  transition: background 0.2s;
+  font-size: 1rem;
+  width: auto;
+  transition: 0.2s;
 }
 
 button[type="submit"]:hover { background: var(--primary-hover); }
 
-.mini-form { display: flex; gap: 8px; margin-top: 15px; }
+.mini-form { display: flex; gap: 10px; margin-top: 15px; }
 
 /* --- RESPONSIVIDADE --- */
 @media (max-width: 600px) {
   .form-row {
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
   }
   
+  input, select {
+    width: 100%;
+  }
+
   .mini-form {
     flex-direction: column;
   }
   
   .mini-form button {
     width: 100%;
+    padding: 12px;
+  }
+  
+  button[type="submit"] {
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 }

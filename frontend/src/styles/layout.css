@@ -4,39 +4,22 @@
   padding: 20px;
 }
 
-.header { margin-bottom: 30px; }
+.header { margin-bottom: 20px; }
 
-/* Grid Principal: 2 Colunas */
 .main-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
+/* --- RESPONSIVIDADE --- */
 @media (max-width: 900px) {
   .main-grid {
-    grid-template-columns: 1fr; /* Vira 1 coluna */
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
   
   .container {
-    padding: 15px; /* Menos padding lateral no celular */
+    padding: 10px;
   }
-}
-
-/* Estilo do Botão de Logout */
-.btn-logout {
-  background-color: var(--red); /* Usa a variável vermelha */
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px; /* Espaço entre ícone e texto */
-  transition: opacity 0.2s;
-}
-
-.btn-logout:hover {
-  opacity: 0.9;
 }

@@ -5,15 +5,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .nav-brand {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.3rem;
+  font-weight: 800;
   color: var(--primary);
   text-decoration: none;
 }
@@ -33,25 +33,17 @@
   align-items: center;
   padding: 8px 12px;
   border-radius: 6px;
-  transition: background 0.2s, color 0.2s;
+  transition: 0.2s;
 }
 
-.nav-link:hover { background-color: #f3f4f6; }
-.nav-link.active { color: var(--primary); background-color: #eff6ff; }
-
-.nav-icon { margin-right: 8px; vertical-align: middle; }
-
-.nav-divider {
-  border-left: 1px solid #e5e7eb;
-  height: 24px;
-  margin: 0 5px;
+.nav-link:hover, .nav-link.active {
+  background-color: #eff6ff;
+  color: var(--primary);
 }
 
-.nav-user-name {
-  font-size: 0.9rem;
-  color: var(--muted);
-  font-weight: 500;
-}
+.nav-icon { margin-right: 8px; }
+.nav-divider { border-left: 1px solid #e5e7eb; height: 24px; margin: 0 5px; }
+.nav-user-name { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
 
 .nav-logout {
   background-color: #fee2e2;
@@ -63,29 +55,45 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.9rem;
-  transition: 0.2s;
+  cursor: pointer;
 }
 
-.nav-logout:hover { background-color: #fecaca; }
-
-/* --- RESPONSIVIDADE --- */
+/* --- RESPONSIVIDADE MOBILE --- */
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
-    gap: 15px;
+    align-items: stretch;
     padding: 15px;
-  }
-  
-  .nav-links {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    font-size: 0.85rem;
+    gap: 15px;
   }
 
-  .nav-link { padding: 6px; }
-  .nav-icon { margin-right: 4px; }
-  .nav-user-name { display: none; }
+  .nav-brand {
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .nav-link {
+    width: 100%;
+    justify-content: center;
+    background-color: #f9fafb;
+    padding: 12px;
+  }
+
   .nav-divider { display: none; }
+  
+  .nav-user-name {
+    display: none;
+  }
+
+  .nav-logout {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+  }
 }
