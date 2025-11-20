@@ -1,0 +1,35 @@
+.card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.card h3 {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* KPIs (Topo) */
+.kpi-section { margin-bottom: 30px; }
+.kpi-section h2 { 
+  font-size: 1.2rem; color: #4b5563; margin-bottom: 15px; 
+  border-bottom: 2px solid #e5e7eb; padding-bottom: 5px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.summary-grid .value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-top: 5px;
+}

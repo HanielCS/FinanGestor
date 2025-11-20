@@ -1,0 +1,69 @@
+.table-container {
+  overflow-x: auto; /* Mantém a rolagem lateral se for mobile */
+  
+  /* --- CONFIGURAÇÃO DA SCROLLBAR VERTICAL --- */
+  max-height: 230px; /* Altura aprox. de 4 a 5 itens. Ajuste esse número se quiser mais ou menos */
+  overflow-y: auto;  /* Cria a barra de rolagem vertical automaticamente */
+  
+  /* Estética da caixa */
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th {
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  
+  /* --- CABEÇALHO FIXO (STICKY HEADER) --- */
+  /* Isso faz o topo da tabela ficar parado enquanto você rola os itens */
+  position: sticky;
+  top: 0;
+  background-color: var(--card); /* Precisa ter cor de fundo para não ficar transparente */
+  z-index: 1; /* Garante que fique por cima do texto */
+}
+
+td {
+  border-bottom: 1px solid #f3f4f6;
+  padding: 12px;
+  vertical-align: middle;
+}
+
+.badge {
+  background: #eff6ff;
+  color: var(--primary);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* --- PERSONALIZAÇÃO DA BARRA DE ROLAGEM --- */
+/* Deixa a barra mais bonita no Chrome/Edge */
+.table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

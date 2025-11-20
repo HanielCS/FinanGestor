@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Modelo de Usuário para autenticação no sistema
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  transactions Transaction[] // Relação: Um usuário tem muitas transações
+
+  @@map("users")
+}
+
+/// Transações financeiras (Receitas e Despesas)
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  type        String   // 'INCOME' ou 'EXPENSE'
+  
+  // Define precisão monetária: até 10 dígitos, sendo 2 casas decimais
+  amount      Decimal  @db.Decimal(10, 2) 
+  
+  category    String   // Ex: 'SALARIO', 'ALUGUEL', 'INVESTIMENTO'
+  description String
+  date        DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  // Relacionamento com o Usuário (Dono da transação)
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+/// Metas Financeiras Globais (Compartilhadas entre todos os usuários)
+model Goal {
+  id            Int       @id @default(autoincrement())
+  title         String
+  
+  // Define precisão monetária para as metas também
+  targetAmount  Decimal   @db.Decimal(10, 2)
+  currentAmount Decimal   @db.Decimal(10, 2) @default(0)
+  
+  deadline      DateTime?
+  status        String    @default("PENDING")
+
+  @@map("goals")
+}

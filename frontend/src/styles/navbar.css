@@ -1,0 +1,82 @@
+.navbar {
+  background-color: var(--card);
+  padding: 15px 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px; /* Espaço para o conteúdo abaixo */
+}
+
+.nav-brand {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Ajustado para melhor espaçamento */
+}
+
+.nav-link {
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 0.95rem;
+  display: flex; /* Alinha ícone e texto */
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #f3f4f6; /* Efeito hover suave */
+}
+
+.nav-link.active {
+  color: var(--primary);
+  background-color: #eff6ff; /* Fundo azul claro no item ativo */
+}
+
+/* Classe nova para os ícones ficarem alinhados */
+.nav-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Classe nova para o divisor vertical */
+.nav-divider {
+  border-left: 1px solid #e5e7eb;
+  height: 24px;
+  margin: 0 5px;
+}
+
+/* Classe nova para o nome do usuário */
+.nav-user-name {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Reutiliza o estilo do botão de logout que criamos antes, mas ajustado */
+.nav-logout {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+
+.nav-logout:hover {
+  background-color: #fecaca;
+}

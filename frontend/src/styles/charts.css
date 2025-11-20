@@ -1,0 +1,10 @@
+/* Estilo específico do Container do Gráfico */
+.chart-card {
+  min-height: 300px; /* Garante altura mínima para o gráfico */
+}
+
+.recharts-tooltip-wrapper {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}

@@ -1,0 +1,46 @@
+/* Container específico para telas de Login/Registro */
+.auth-container {
+  max-width: 400px;
+  margin: 80px auto 0; /* 80px topo, auto laterais (centraliza) */
+  padding: 0 20px; /* Margem de segurança para mobile */
+}
+
+.auth-title {
+  text-align: center;
+  color: var(--primary);
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+/* Agrupamento de Label + Input */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Botão de Login ocupa a largura toda */
+.auth-btn {
+  width: 100%;
+  margin-top: 10px;
+  height: 45px;
+  font-size: 1rem;
+}
+
+/* Link de rodapé (Não tem conta?) */
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.auth-footer a {
+  font-weight: 600;
+}
