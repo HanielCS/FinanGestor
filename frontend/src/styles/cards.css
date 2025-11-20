@@ -15,7 +15,6 @@
   gap: 8px;
 }
 
-/* KPIs (Topo) */
 .kpi-section { margin-bottom: 30px; }
 .kpi-section h2 { 
   font-size: 1.2rem; color: #4b5563; margin-bottom: 15px; 
@@ -32,4 +31,15 @@
   font-size: 1.8rem;
   font-weight: 700;
   margin-top: 5px;
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 600px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-grid .value {
+    font-size: 1.5rem;
+  }
 }

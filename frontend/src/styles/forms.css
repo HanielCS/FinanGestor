@@ -1,13 +1,22 @@
-.form-card { display: flex; flex-direction: column; gap: 15px; }
-.form-row { display: flex; gap: 10px; }
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
 .flex-2 { flex: 2; }
 
 input, select {
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   flex: 1;
-  font-size: 0.9rem;
+  font-size: 16px;
 }
 
 input:focus, select:focus {
@@ -19,7 +28,7 @@ button[type="submit"], .btn-primary {
   background: var(--primary);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 20px;
   border-radius: 6px;
   font-weight: 600;
   transition: background 0.2s;
@@ -28,3 +37,19 @@ button[type="submit"], .btn-primary {
 button[type="submit"]:hover { background: var(--primary-hover); }
 
 .mini-form { display: flex; gap: 8px; margin-top: 15px; }
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .mini-form {
+    flex-direction: column;
+  }
+  
+  .mini-form button {
+    width: 100%;
+  }
+}

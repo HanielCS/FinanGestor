@@ -14,7 +14,13 @@
 }
 
 @media (max-width: 900px) {
-  .main-grid { grid-template-columns: 1fr; }
+  .main-grid {
+    grid-template-columns: 1fr; /* Vira 1 coluna */
+  }
+  
+  .container {
+    padding: 15px; /* Menos padding lateral no celular */
+  }
 }
 
 /* Estilo do Botão de Logout */
