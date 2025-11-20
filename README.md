@@ -1,156 +1,163 @@
 💰 FinanGestor
 
-FinanGestor é uma aplicação web completa para gestão financeira pessoal e empresarial. O sistema permite o controle de receitas e despesas, visualização de indicadores financeiros (KPIs), gerenciamento de metas globais e histórico detalhado de transações.
+FinanGestor é uma aplicação web completa para gestão financeira pessoal e empresarial.
+O sistema permite o controle de receitas e despesas, visualização de indicadores financeiros (KPIs), gerenciamento de metas globais e histórico detalhado de transações.
 
 📸 Screenshots
 
-(Aqui você pode colocar prints da sua aplicação depois)
+(Adicione capturas de tela da aplicação aqui quando quiser.)
 
 🚀 Funcionalidades
+🔐 Autenticação Segura
 
-Autenticação Segura: Cadastro e Login de usuários com criptografia de senha e Tokens JWT.
+Cadastro e login
 
-Dashboard Interativo:
+Criptografia de senha
 
-Indicadores de Saldo Líquido, Margem Líquida e ROI.
+Autenticação via JWT
 
-Gráfico de Fluxo de Caixa (Entradas vs Saídas).
+📊 Dashboard Interativo
 
-Gestão de Transações:
+Indicadores: Saldo Líquido, Margem Líquida, ROI
 
-Adicionar, Editar e Excluir transações.
+Gráfico de fluxo de caixa (Entradas vs Saídas)
 
-Categorização (Salário, Aluguel, Investimentos, etc.).
+💼 Gestão de Transações
 
-Filtro de histórico pessoal e global.
+CRUD de transações
 
-Metas Financeiras:
+Categorias (Salário, Aluguel, Investimentos etc.)
 
-Sistema de Metas Globais.
+Filtro de histórico pessoal e global
 
-Barra de progresso visual.
+🎯 Metas Financeiras
 
-Adição de fundos, edição e exclusão de metas.
+Sistema de metas globais
 
-Interface Responsiva: Design limpo e adaptável para dispositivos móveis e desktop.
+Barra de progresso visual
+
+Adicionar fundos, editar e excluir metas
+
+📱 Interface Responsiva
+
+Design moderno e adaptado para todos os dispositivos
 
 🛠️ Tecnologias Utilizadas
-
 Frontend
 
-React.js (Vite)
+React (Vite)
 
-CSS Modules (Arquitetura modularizada em src/styles)
+CSS Modules
 
-Recharts (Gráficos interativos)
+Recharts
 
-Lucide React (Ícones modernos)
+Lucide React
 
-Axios (Comunicação com API)
+Axios
 
 Backend
 
 Node.js
 
-Express (Framework de servidor)
+Express
 
-Prisma ORM (Abstração de banco de dados)
+Prisma ORM
 
-PostgreSQL (Banco de dados na nuvem via Neon.tech)
+PostgreSQL (Neon.tech)
 
-JWT & Bcrypt (Segurança e Autenticação)
+JWT & Bcrypt
 
 📦 Pré-requisitos
 
-Antes de começar, certifique-se de ter instalado em sua máquina:
-
-Node.js (v18 ou superior)
+Node.js v18+
 
 Git
 
-Uma conta no Neon.tech ou outro provedor PostgreSQL.
+Conta no Neon.tech (ou outro serviço PostgreSQL)
 
 🔧 Como Rodar o Projeto Localmente
+1️⃣ Clonar o repositório
 
-1. Clone o repositório
-
-git clone [https://github.com/SEU_USUARIO/finangestor.git](https://github.com/SEU_USUARIO/finangestor.git)
+```bash
+git clone https://github.com/SEU_USUARIO/finangestor.git
 cd finangestor
+```
 
+2️⃣ Configurar o Backend
 
-2. Configurando o Backend
-
-Entre na pasta do servidor e instale as dependências:
-
+Entrar na pasta backend e instalar dependências:
+```bash
 cd backend
 npm install
+```
+Criar o arquivo .env:
 
-
-Crie um arquivo .env na raiz da pasta backend e configure a URL do seu banco de dados:
-
+```bash
 # URL de conexão com o PostgreSQL (Exemplo Neon)
 DATABASE_URL="postgresql://usuario:senha@host:5432/banco?sslmode=require"
 
-# Porta do Servidor (Opcional, padrão 3000)
+# Porta do Servidor (Opcional)
 PORT=3000
+```
+Rodar as migrações:
 
-
-Execute as migrações para criar as tabelas no banco:
-
+```bash
 npx prisma migrate dev --name init
+```
+Iniciar o backend:
 
-
-Inicie o servidor:
-
+```bash
 npm run dev
+```
+Backend rodando em:
 
+```bash
+http://localhost:3000
+```
 
-O backend rodará em http://localhost:3000
+3️⃣ Configurar o Frontend
 
-3. Configurando o Frontend
-
-Abra um novo terminal, entre na pasta do frontend e instale as dependências:
-
+```bash
 cd ../frontend
 npm install
+```
+(Opcional) Criar .env:
 
-
-(Opcional) Crie um arquivo .env na pasta frontend se precisar apontar para um backend diferente (ex: produção):
-
+```bash
 VITE_API_URL="http://localhost:3000"
+```
+Iniciar o projeto:
 
-
-Inicie a interface:
-
+```bash
 npm run dev
+```
+Frontend disponível em:
 
-
-O frontend rodará em http://localhost:5173
-
+```bash
+http://localhost:5173
+```
 📂 Estrutura do Projeto
 
+```bash
 finangestor/
 ├── backend/
-│   ├── controllers/   # Regras de negócio (Auth, Transaction, Goal, Dashboard)
-│   ├── middlewares/   # Autenticação (authMiddleware)
-│   ├── prisma/        # Schema do banco de dados e Migrations
-│   ├── routes.js      # Definição de rotas da API
-│   └── index.js       # Ponto de entrada do servidor
+│   ├── controllers/     # Regras de negócio
+│   ├── middlewares/     # Autenticação JWT
+│   ├── prisma/          # Schema e migrations
+│   ├── routes.js        # Rotas da API
+│   └── index.js         # Inicialização do servidor
 │
 └── frontend/
     ├── src/
-    │   ├── components/ # Componentes reutilizáveis (Navbar, Modal, Cards)
-    │   ├── context/    # Contexto Global de Autenticação
-    │   ├── pages/      # Telas (Dashboard, Login, Minhas Transações)
-    │   └── styles/     # CSS organizado por módulos (cards.css, modal.css, etc.)
-
-
+    │   ├── components/  # Navbar, Cards, Modal, etc.
+    │   ├── context/     # Estado global (Auth)
+    │   ├── pages/       # Páginas: Dashboard, Login...
+    │   └── styles/      # CSS Modules
+```
 🌍 Deploy (Hospedagem)
 
-O projeto está pronto para deploy na stack gratuita:
+Banco de Dados: Neon.tech (PostgreSQL)
 
-Banco de Dados: Neon Tech (PostgreSQL).os
+Backend: Render.com
 
-Backend: Render.com (Web Service).
-
-Frontend: Vercel.
+Frontend: Vercel
