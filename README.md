@@ -92,10 +92,10 @@ npm install
 Criar o arquivo .env:
 
 ```bash
-### URL de conexão com o PostgreSQL (Exemplo Neon)
+# URL de conexão com o PostgreSQL (Exemplo Neon)
 DATABASE_URL="postgresql://usuario:senha@host:5432/banco?sslmode=require"
 
-### Porta do Servidor (Opcional)
+# Porta do Servidor (Opcional)
 PORT=3000
 ```
 Rodar as migrações:
