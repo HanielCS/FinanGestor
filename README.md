@@ -1,11 +1,11 @@
-### 💰 FinanGestor
+# 💰 FinanGestor
 
 FinanGestor é uma aplicação web completa para gestão financeira pessoal e empresarial.
 O sistema permite o controle de receitas e despesas, visualização de indicadores financeiros (KPIs), gerenciamento de metas globais e histórico detalhado de transações.
 
 ## 🚀 Funcionalidades
 
-# 🔐 Autenticação Segura
+### 🔐 Autenticação Segura
 
 Cadastro e login
 
@@ -13,7 +13,7 @@ Criptografia de senha
 
 Autenticação via JWT
 
-# 📊 Dashboard Interativo
+### 📊 Dashboard Interativo
 
 Indicadores: Saldo Líquido, Margem Líquida, ROI
 
@@ -27,7 +27,7 @@ Categorias (Salário, Aluguel, Investimentos etc.)
 
 Filtro de histórico pessoal e global
 
-# 🎯 Metas Financeiras
+### 🎯 Metas Financeiras
 
 Sistema de metas globais
 
@@ -35,13 +35,13 @@ Barra de progresso visual
 
 Adicionar fundos, editar e excluir metas
 
-# 📱 Interface Responsiva
+### 📱 Interface Responsiva
 
 Design moderno e adaptado para todos os dispositivos
 
-### 🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
-## Frontend
+### Frontend
 
 React (Vite)
 
@@ -53,7 +53,7 @@ Lucide React
 
 Axios
 
-## Backend
+### Backend
 
 Node.js
 
@@ -65,7 +65,7 @@ PostgreSQL (Neon.tech)
 
 JWT & Bcrypt
 
-# 📦 Pré-requisitos
+## 📦 Pré-requisitos
 
 Node.js v18+
 
@@ -73,7 +73,7 @@ Git
 
 Conta no Neon.tech (ou outro serviço PostgreSQL)
 
-# 🔧 Como Rodar o Projeto Localmente
+## 🔧 Como Rodar o Projeto Localmente
 
 1️⃣ Clonar o repositório
 
@@ -92,10 +92,10 @@ npm install
 Criar o arquivo .env:
 
 ```bash
-# URL de conexão com o PostgreSQL (Exemplo Neon)
+### URL de conexão com o PostgreSQL (Exemplo Neon)
 DATABASE_URL="postgresql://usuario:senha@host:5432/banco?sslmode=require"
 
-# Porta do Servidor (Opcional)
+### Porta do Servidor (Opcional)
 PORT=3000
 ```
 Rodar as migrações:
@@ -153,7 +153,7 @@ finangestor/
     │   ├── pages/       # Páginas: Dashboard, Login...
     │   └── styles/      # CSS Modules
 ```
-# 🌍 Deploy (Hospedagem)
+## 🌍 Deploy (Hospedagem)
 
 Banco de Dados: Neon.tech (PostgreSQL)
 
