@@ -43,7 +43,8 @@ Adicionar fundos, editar e excluir metas
 Design moderno e adaptado para todos os dispositivos
 
 🛠️ Tecnologias Utilizadas
-Frontend
+
+## Frontend
 
 React (Vite)
 
@@ -55,7 +56,7 @@ Lucide React
 
 Axios
 
-Backend
+## Backend
 
 Node.js
 
