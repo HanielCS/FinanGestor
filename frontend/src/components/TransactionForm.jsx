@@ -1,116 +1,230 @@
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
-/**
- * Formulário para lançamento rápido de novas transações.
- * Mantém o estado da Data e Categoria após salvar para facilitar lançamentos em sequência.
- */
-export default function TransactionForm({ onSave }) {
-  // Inicializa a data com o dia atual no formato correto para input (YYYY-MM-DD)
+export default function TransactionForm({ isOpen, onClose, onSaved, initialData = null }) {
+  const { addToast } = useToast();
+  const [meta, setMeta] = useState({ accounts: [], categories: [] });
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
-    description: '',
+    type: 'EXPENSE',
     amount: '',
-    type: 'INCOME',
-    category: 'SALARIO',
-    date: new Date().toLocaleDateString('en-CA'),
-    notes: ''
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    categoryId: '',
+    accountId: '',
+    notes: '',
+    isRecurring: false,
+    installments: 1,
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validação básica
-    if (!form.description || !form.amount) return;
-    
-    // Envia para o componente pai (DashboardPage)
-    onSave(form);
-
-    // Limpa apenas os campos variáveis, mantendo Data e Categoria 
-    // para agilizar o próximo lançamento
-    setForm({ 
-      ...form, 
-      description: '', 
-      amount: '', 
-      notes: '' 
+  useEffect(() => {
+    if (!isOpen) return;
+    api.get('/meta').then(({ data }) => {
+      setMeta(data);
+      if (!initialData && data.accounts.length > 0) {
+        setForm((prev) => ({ ...prev, accountId: prev.accountId || data.accounts[0].id }));
+      }
     });
+  }, [isOpen, initialData]);
+
+  useEffect(() => {
+    if (initialData) {
+      setForm({
+        type: initialData.type,
+        amount: initialData.amount,
+        description: initialData.description,
+        date: new Date(initialData.date).toISOString().split('T')[0],
+        categoryId: initialData.categoryId || '',
+        accountId: initialData.accountId || '',
+        notes: initialData.notes || '',
+        isRecurring: Boolean(initialData.isRecurring),
+        installments: 1,
+      });
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        type: 'EXPENSE',
+        amount: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0],
+        categoryId: '',
+        notes: '',
+        isRecurring: false,
+        installments: 1,
+      }));
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const filteredCategories = meta.categories.filter((c) => c.type === form.type);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const payload = {
+        ...form,
+        amount: Number(form.amount),
+        categoryId: form.categoryId ? Number(form.categoryId) : null,
+        accountId: form.accountId ? Number(form.accountId) : null,
+        installments: Number(form.installments) || 1,
+      };
+
+      if (initialData) {
+        await api.put(`/transactions/${initialData.id}`, payload);
+        addToast('Transação atualizada!', 'success');
+      } else {
+        await api.post('/transactions', payload);
+        addToast('Transação registrada com sucesso!', 'success');
+      }
+      onSaved();
+      onClose();
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Erro ao salvar transação.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="form-card">
-      <h3>Nova Transação</h3>
-      
-      {/* Linha 1: Descrição e Data */}
-      <div className="form-row">
-        <input 
-          type="text" 
-          placeholder="Descrição (Ex: Almoço, Freela)" 
-          value={form.description} 
-          onChange={e => setForm({...form, description: e.target.value})} 
-          className="flex-2"
-          required
-        />
-        <input 
-          type="date" 
-          value={form.date} 
-          onChange={e => setForm({...form, date: e.target.value})} 
-          required
-        />
-      </div>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
+          <h3>{initialData ? 'Editar Transação' : 'Nova Transação'}</h3>
+          <button className="btn btn-outline" style={{ padding: '0.3rem' }} onClick={onClose}>
+            <X size={17} />
+          </button>
+        </div>
 
-      {/* Linha 2: Valor e Tipo */}
-      <div className="form-row">
-        <input 
-          type="number" 
-          placeholder="Valor (R$)" 
-          value={form.amount} 
-          onChange={e => setForm({...form, amount: e.target.value})} 
-          step="0.01" // Permite centavos
-          min="0.01"
-          required
-        />
-        <select 
-          value={form.type} 
-          onChange={e => setForm({...form, type: e.target.value})}
-        >
-          <option value="INCOME">Receita (+)</option>
-          <option value="EXPENSE">Despesa (-)</option>
-        </select>
-      </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            <button
+              type="button"
+              className={`btn ${form.type === 'EXPENSE' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setForm({ ...form, type: 'EXPENSE', categoryId: '' })}
+            >
+              Despesa
+            </button>
+            <button
+              type="button"
+              className={`btn ${form.type === 'INCOME' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setForm({ ...form, type: 'INCOME', categoryId: '' })}
+            >
+              Receita
+            </button>
+          </div>
 
-      {/* Linha 3: Categoria e Botão Salvar */}
-      <div className="form-row">
-        <select 
-          value={form.category} 
-          onChange={e => setForm({...form, category: e.target.value})} 
-          className="flex-2"
-        >
-          <optgroup label="Entradas">
-            <option value="SALARIO">Salários</option>
-            <option value="ALUGUEL_REC">Aluguéis (Recebidos)</option>
-            <option value="INVESTIMENTO">Rendimentos/Investimentos</option>
-            <option value="VENDA">Vendas</option>
-          </optgroup>
-          <optgroup label="Saídas">
-            <option value="FIXA">Despesas Fixas</option>
-            <option value="VARIAVEL">Despesas Variáveis</option>
-            <option value="EXTRA">Despesas Extras</option>
-            <option value="PESSOAL">Contas Pessoais</option>
-            <option value="IMPOSTO">Multas e Impostos</option>
-          </optgroup>
-        </select>
-        
-        <button type="submit" title="Adicionar Transação" style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
-          <Plus size={18} /> Salvar
-        </button>
-      </div>
+          <div className="form-group">
+            <label className="form-label">Descrição</label>
+            <input
+              className="input"
+              required
+              placeholder="Ex: Supermercado, Salário..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+          </div>
 
-      {/* Linha 4: Notas (Opcional) */}
-      <input 
-        type="text" 
-        placeholder="Notas ou Comentários (Opcional)" 
-        value={form.notes} 
-        onChange={e => setForm({...form, notes: e.target.value})} 
-      />
-    </form>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Valor Total (R$)</label>
+              <input
+                className="input"
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data</label>
+              <input
+                className="input"
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Categoria</label>
+              <select
+                className="select"
+                value={form.categoryId}
+                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+              >
+                <option value="">Selecione...</option>
+                {filteredCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Conta / Carteira</label>
+              <select
+                className="select"
+                value={form.accountId}
+                onChange={(e) => setForm({ ...form, accountId: e.target.value })}
+              >
+                <option value="">Sem conta vinculada</option>
+                {meta.accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {!initialData && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+              <div className="form-group">
+                <label className="form-label">Parcelas (1 = à vista)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={form.installments}
+                  onChange={(e) => setForm({ ...form, installments: e.target.value })}
+                />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem', fontSize: '0.88rem' }}>
+                <input
+                  type="checkbox"
+                  checked={form.isRecurring}
+                  onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
+                />
+                Lançamento fixo/recorrente
+              </label>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Observações (opcional)</label>
+            <input
+              className="input"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Salvando...' : 'Confirmar Lançamento'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

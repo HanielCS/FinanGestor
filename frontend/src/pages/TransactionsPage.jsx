@@ -1,221 +1,251 @@
-import { useState, useEffect } from 'react';
-import api from '../api';
-import Navbar from '../components/Navbar';
-import Modal from '../components/Modal';
-import { Edit2, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Download, Upload, Trash2, RotateCcw, Edit3 } from 'lucide-react';
+import Layout from '../components/Layout';
+import TransactionForm from '../components/TransactionForm';
+import ImportModal from '../components/ImportModal';
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
-/**
- * Página de Gerenciamento de Transações.
- * Permite listar, editar e excluir lançamentos financeiros do usuário.
- */
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState([]);
-  
-  // Estados para controle dos Modais
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
-
-  // Formulário de Edição
-  const [editForm, setEditForm] = useState({
-    description: '', amount: '', type: '', category: '', date: '', notes: ''
+  const { addToast } = useToast();
+  const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [meta, setMeta] = useState({ accounts: [], categories: [] });
+  const [filters, setFilters] = useState({
+    page: 1,
+    search: '',
+    type: '',
+    categoryId: '',
+    accountId: '',
+    includeDeleted: 'false',
   });
 
-  useEffect(() => { loadTransactions(); }, []);
+  const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState(null);
 
-  async function loadTransactions() {
-    try {
-      const response = await api.get('/transactions');
-      setTransactions(response.data);
-    } catch (error) { 
-      console.error("Erro ao carregar transações", error);
-    }
-  }
+  const loadData = useCallback(async () => {
+    const [txRes, metaRes] = await Promise.all([
+      api.get('/transactions', { params: filters }),
+      api.get('/meta'),
+    ]);
+    setItems(txRes.data.items);
+    setPagination(txRes.data.pagination);
+    setMeta(metaRes.data);
+  }, [filters]);
 
-  // Helpers de Formatação
-  const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val));
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  // --- ABRIR MODAIS ---
-  function openEdit(t) {
-    setSelectedTransaction(t);
-    setEditForm({
-      description: t.description,
-      amount: t.amount,
-      type: t.type,
-      category: t.category,
-      date: t.date.split('T')[0],
-      notes: t.notes || ''
+  const handleDelete = async (id) => {
+    await api.delete(`/transactions/${id}`);
+    addToast('Transação movida para a lixeira.', 'info');
+    loadData();
+  };
+
+  const handleRestore = async (id) => {
+    await api.patch(`/transactions/${id}/restore`);
+    addToast('Transação restaurada!', 'success');
+    loadData();
+  };
+
+  const handleExportCSV = async () => {
+    const response = await api.get('/transactions/export/csv', {
+      params: filters,
+      responseType: 'blob',
     });
-    setEditModalOpen(true);
-  }
-
-  function openDelete(t) {
-    setSelectedTransaction(t);
-    setDeleteModalOpen(true);
-  }
-
-  // --- AÇÕES NO BANCO ---
-  async function handleUpdate() {
-    try {
-      await api.put(`/transactions/${selectedTransaction.id}`, {
-        ...editForm,
-        amount: parseFloat(editForm.amount),
-        date: new Date(editForm.date).toISOString()
-      });
-      setEditModalOpen(false);
-      loadTransactions();
-    } catch (error) {
-      alert(error.response?.data?.error || "Erro ao atualizar transação");
-    }
-  }
-
-  async function handleDelete() {
-    try {
-      await api.delete(`/transactions/${selectedTransaction.id}`);
-      setDeleteModalOpen(false);
-      loadTransactions();
-    } catch (error) {
-      alert(error.response?.data?.error || "Erro ao excluir transação");
-    }
-  }
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'finangestor-extrato.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   return (
-    <>
-      <Navbar />
-      
-      <div className="container">
-        <div style={{marginBottom: '20px'}}>
-          <h2>Gerenciar Transações</h2>
-          <p style={{color: 'var(--muted)'}}>Edite ou remova seus lançamentos passados.</p>
+    <Layout
+      title="Histórico de Transações"
+      onQuickNewTransaction={() => {
+        setEditingTx(null);
+        setFormOpen(true);
+      }}
+    >
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button className="btn btn-outline" onClick={() => setImportOpen(true)}>
+              <Upload size={16} /> Importar CSV/OFX
+            </button>
+            <button className="btn btn-outline" onClick={handleExportCSV}>
+              <Download size={16} /> Exportar CSV
+            </button>
+          </div>
+
+          <button
+            className="btn btn-outline"
+            onClick={() =>
+              setFilters((f) => ({
+                ...f,
+                page: 1,
+                includeDeleted: f.includeDeleted === 'true' ? 'false' : 'true',
+              }))
+            }
+          >
+            {filters.includeDeleted === 'true' ? 'Ver Ativos' : 'Ver Lixeira (Excluídos)'}
+          </button>
         </div>
 
-        <div className="card">
-          <div className="table-container" style={{maxHeight: '600px'}}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Descrição</th>
-                  <th>Categoria</th>
-                  <th>Valor</th>
-                  <th style={{textAlign: 'center'}}>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                
-                {/* Estado Vazio */}
-                {transactions.length === 0 && (
-                  <tr>
-                    <td colSpan="5" style={{textAlign: 'center', padding: '30px', color: 'var(--muted)'}}>
-                      Nenhuma transação encontrada.
-                    </td>
-                  </tr>
-                )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.65rem' }}>
+          <input
+            className="input"
+            placeholder="Buscar descrição..."
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, page: 1, search: e.target.value })}
+          />
 
-                {/* Lista */}
-                {transactions.map(t => (
+          <select
+            className="select"
+            value={filters.type}
+            onChange={(e) => setFilters({ ...filters, page: 1, type: e.target.value })}
+          >
+            <option value="">Todos os tipos</option>
+            <option value="INCOME">Receitas</option>
+            <option value="EXPENSE">Despesas</option>
+          </select>
+
+          <select
+            className="select"
+            value={filters.categoryId}
+            onChange={(e) => setFilters({ ...filters, page: 1, categoryId: e.target.value })}
+          >
+            <option value="">Todas as categorias</option>
+            {meta.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="select"
+            value={filters.accountId}
+            onChange={(e) => setFilters({ ...filters, page: 1, accountId: e.target.value })}
+          >
+            <option value="">Todas as contas</option>
+            {meta.accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Conta</th>
+                <th>Valor</th>
+                <th style={{ textAlign: 'right' }}>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Nenhuma transação encontrada para os filtros aplicados.
+                  </td>
+                </tr>
+              ) : (
+                items.map((t) => (
                   <tr key={t.id}>
-                    <td className="text-muted">{formatDate(t.date)}</td>
+                    <td>{new Date(t.date).toLocaleDateString('pt-BR')}</td>
                     <td>
                       <strong>{t.description}</strong>
-                      {t.notes && <div style={{fontSize: '0.85rem', color: 'var(--muted)', marginTop: '2px'}}>{t.notes}</div>}
+                      {t.isRecurring && <span className="badge badge-warning" style={{ marginLeft: 6 }}>Fixa</span>}
                     </td>
-                    <td><span className="badge">{t.category}</span></td>
-                    <td 
-                      className={t.type === 'INCOME' ? 'text-green' : 'text-red'}
-                      style={{ fontWeight: 500 }}
-                    >
-                      {t.type === 'INCOME' ? '+' : '-'} {formatCurrency(t.amount)}
+                    <td>{t.categoryRel?.name || t.category}</td>
+                    <td>{t.account?.name || '—'}</td>
+                    <td>
+                      <span className={`badge ${t.type === 'INCOME' ? 'badge-income' : 'badge-expense'}`}>
+                        {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toFixed(2)}
+                      </span>
                     </td>
-                    <td style={{textAlign: 'center'}}>
-                      <div style={{display: 'flex', justifyContent: 'center', gap: '8px'}}>
-                        <button className="btn-icon btn-edit" onClick={() => openEdit(t)} title="Editar">
-                            <Edit2 size={16}/>
+                    <td style={{ textAlign: 'right' }}>
+                      {filters.includeDeleted === 'true' ? (
+                        <button className="btn btn-outline" onClick={() => handleRestore(t.id)} title="Restaurar">
+                          <RotateCcw size={15} />
                         </button>
-                        <button className="btn-icon btn-delete" onClick={() => openDelete(t)} title="Excluir">
-                            <Trash2 size={16}/>
-                        </button>
-                      </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                          <button
+                            className="btn btn-outline"
+                            onClick={() => {
+                              setEditingTx(t);
+                              setFormOpen(true);
+                            }}
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button className="btn btn-danger" onClick={() => handleDelete(t.id)}>
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+          <span style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>
+            Total: {pagination.total} registros
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="btn btn-outline"
+              disabled={pagination.page <= 1}
+              onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
+            >
+              Anterior
+            </button>
+            <span style={{ alignSelf: 'center', fontSize: '0.85rem' }}>
+              Página {pagination.page} de {pagination.totalPages}
+            </span>
+            <button
+              className="btn btn-outline"
+              disabled={pagination.page >= pagination.totalPages}
+              onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
+            >
+              Próxima
+            </button>
           </div>
         </div>
       </div>
 
-      {/* --- MODAL DE EDIÇÃO --- */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setEditModalOpen(false)} title="Editar Transação">
-        <div className="form-card" style={{marginTop: '0'}}>
-          
-          <div className="form-row">
-            <div className="input-group flex-2">
-              <label>Descrição</label>
-              <input type="text" value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} />
-            </div>
-            <div className="input-group">
-              <label>Data</label>
-              <input type="date" value={editForm.date} onChange={e => setEditForm({...editForm, date: e.target.value})} />
-            </div>
-          </div>
+      <TransactionForm
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSaved={loadData}
+        initialData={editingTx}
+      />
 
-          <div className="form-row">
-            <div className="input-group">
-              <label>Valor (R$)</label>
-              <input type="number" value={editForm.amount} onChange={e => setEditForm({...editForm, amount: e.target.value})} step="0.01" />
-            </div>
-            <div className="input-group">
-              <label>Tipo</label>
-              <select value={editForm.type} onChange={e => setEditForm({...editForm, type: e.target.value})}>
-                 <option value="INCOME">Receita</option>
-                 <option value="EXPENSE">Despesa</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="input-group">
-            <label>Categoria</label>
-            <select value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})}>
-              <optgroup label="Entradas">
-               <option value="SALARIO">Salário</option>
-               <option value="ALUGUEL_REC">Aluguel (Recebido)</option>
-               <option value="VENDA">Venda</option>
-               <option value="INVESTIMENTO">Investimento</option>
-              </optgroup>
-              <optgroup label="Saídas">
-               <option value="ALUGUEL">Aluguel (Pago)</option>
-               <option value="FIXA">Despesa Fixa</option>
-               <option value="VARIAVEL">Despesa Variável</option>
-               <option value="EXTRA">Extra</option>
-               <option value="PESSOAL">Pessoal</option>
-               <option value="IMPOSTO">Imposto</option>
-              </optgroup>
-            </select>
-          </div>
-
-          <div className="input-group">
-            <label>Notas</label>
-            <input type="text" value={editForm.notes} onChange={e => setEditForm({...editForm, notes: e.target.value})} />
-          </div>
-
-        </div>
-        <div className="modal-actions">
-          <button onClick={() => setEditModalOpen(false)} className="btn-cancel">Cancelar</button>
-          <button onClick={handleUpdate} className="btn-confirm">Salvar Alterações</button>
-        </div>
-      </Modal>
-
-      {/* --- MODAL DE EXCLUSÃO --- */}
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Excluir Transação">
-        <p>Tem certeza que deseja excluir <strong>{selectedTransaction?.description}</strong>?</p>
-        <p className="text-red" style={{fontSize: '0.9rem'}}>O valor será removido do saldo e dos cálculos.</p>
-        <div className="modal-actions">
-            <button onClick={() => setDeleteModalOpen(false)} className="btn-cancel">Cancelar</button>
-            <button onClick={handleDelete} className="btn-danger">Excluir Definitivamente</button>
-        </div>
-      </Modal>
-    </>
+      <ImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={loadData}
+        accounts={meta.accounts}
+      />
+    </Layout>
   );
 }

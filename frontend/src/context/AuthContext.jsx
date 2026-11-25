@@ -1,74 +1,50 @@
-import { createContext, useState, useEffect } from 'react';
-import api from '../api';
+import { createContext, useEffect, useState } from 'react';
+import { api, setAccessToken } from '../services/api';
 
 export const AuthContext = createContext();
 
-/**
- * Provedor de Autenticação.
- * Gerencia o estado do usuário, persistência (localStorage) e cabeçalhos HTTP.
- */
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Evita piscar a tela de login ao recarregar
+  const [loading, setLoading] = useState(true);
 
-  // 1. Ao iniciar, verifica se existe sessão salva
   useEffect(() => {
-    const recoveredUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-
-    if (recoveredUser && token) {
-      setUser(JSON.parse(recoveredUser));
-      // Restaura o token no Axios para todas as requisições futuras
-      api.defaults.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    setLoading(false);
+    api
+      .post('/auth/refresh')
+      .then(({ data }) => {
+        setAccessToken(data.accessToken);
+        setUser(data.user);
+      })
+      .catch(() => {
+        setAccessToken(null);
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  // 2. Função de Login
   const login = async (email, password) => {
-    // A chamada API pode lançar erro, quem chama (LoginPage) deve tratar o catch
-    const response = await api.post('/login', { email, password });
-    
-    const { user: loggedUser, token } = response.data;
-
-    // Salva no Storage
-    localStorage.setItem('user', JSON.stringify(loggedUser));
-    localStorage.setItem('token', token);
-
-    // Configura API e Estado
-    api.defaults.headers.Authorization = `Bearer ${token}`;
-    setUser(loggedUser);
+    const { data } = await api.post('/auth/login', { email, password });
+    setAccessToken(data.accessToken);
+    setUser(data.user);
   };
 
-  // 3. Função de Logout
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    
-    // Remove o header de autorização do Axios
-    delete api.defaults.headers.Authorization;
-    
-    setUser(null);
-  };
-
-  // 4. Função de Registro (Proxy para API)
   const register = async (name, email, password) => {
-    await api.post('/register', { name, email, password });
+    const { data } = await api.post('/auth/register', { name, email, password });
+    setAccessToken(data.accessToken);
+    setUser(data.user);
+  };
+
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      setAccessToken(null);
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        authenticated: !!user, // Booleano: true se tiver usuário, false se não
-        user, 
-        loading, 
-        login, 
-        logout, 
-        register 
-      }}
-    >
+    <AuthContext.Provider value={{ authenticated: !!user, user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}

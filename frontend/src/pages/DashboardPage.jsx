@@ -1,207 +1,136 @@
-import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import api from '../api';
-
-// Componentes
-import Navbar from '../components/Navbar'; // <--- Importado
+import { useCallback, useEffect, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import Layout from '../components/Layout';
 import KPIs from '../components/KPIs';
 import FinancialChart from '../components/FinancialChart';
 import TransactionForm from '../components/TransactionForm';
-import GoalsSection from '../components/GoalsSection';
-import TransactionHistory from '../components/TransactionHistory';
-import GlobalHistory from '../components/GlobalHistory';
-import Modal from '../components/Modal';
+import { api } from '../services/api';
 
 export default function DashboardPage() {
-  const { logout } = useContext(AuthContext);
-  
-  // Dados da API
-  const [transactions, setTransactions] = useState([]);
-  const [globalTransactions, setGlobalTransactions] = useState([]);
-  const [goals, setGoals] = useState([]);
-  const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
-  const [indicators, setIndicators] = useState({ netMargin: '0%', roi: '0%' });
+  const now = new Date();
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(now.getFullYear());
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // --- ESTADOS PARA CONTROLE DOS MODAIS ---
-  const [activeModal, setActiveModal] = useState(null); 
-  const [selectedGoal, setSelectedGoal] = useState(null);
-  
-  // Estados temporários
-  const [tempAmount, setTempAmount] = useState('');
-  const [tempTitle, setTempTitle] = useState('');
-  const [tempTarget, setTempTarget] = useState('');
-
-  useEffect(() => { loadData(); }, []);
-
-  async function loadData() {
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
     try {
-      const [transRes, globalRes, dashRes, goalsRes] = await Promise.all([
-        api.get('/transactions'),
-        api.get('/transactions/global'),
-        api.get('/dashboard'),
-        api.get('/goals')
-      ]);
-      setTransactions(transRes.data);
-      setGlobalTransactions(globalRes.data);
-      setSummary(dashRes.data.summary);
-      setIndicators(dashRes.data.indicators);
-      setGoals(goalsRes.data);
-    } catch (error) {
-      if (error.response?.status === 401) logout();
+      const res = await api.get('/dashboard', { params: { month, year } });
+      setData(res.data);
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [month, year]);
 
-  // --- AÇÕES DE ABERTURA DOS MODAIS ---
-  function openAddMoneyModal(goalId) {
-    const goal = goals.find(g => g.id === goalId);
-    setSelectedGoal(goal);
-    setTempAmount(''); 
-    setActiveModal('ADD_MONEY');
-  }
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
-  function openEditModal(goal) {
-    setSelectedGoal(goal);
-    setTempTitle(goal.title);        
-    setTempTarget(goal.targetAmount);
-    setActiveModal('EDIT');
-  }
-
-  function openDeleteModal(goalId) {
-    const goal = goals.find(g => g.id === goalId);
-    setSelectedGoal(goal);
-    setActiveModal('DELETE');
-  }
-
-  function closeModal() {
-    setActiveModal(null);
-    setSelectedGoal(null);
-  }
-
-  // --- AÇÕES DE CONFIRMAÇÃO ---
-  async function confirmAddMoney() {
-    if (!tempAmount || parseFloat(tempAmount) <= 0) return alert("Valor inválido");
-    try {
-      await api.put(`/goals/${selectedGoal.id}/add`, { amount: parseFloat(tempAmount) });
-      loadData();
-      closeModal();
-    } catch (error) { alert("Erro ao atualizar meta."); }
-  }
-
-  async function confirmEdit() {
-    if (!tempTitle || !tempTarget) return alert("Preencha os campos");
-    try {
-      await api.put(`/goals/${selectedGoal.id}`, {
-        title: tempTitle,
-        targetAmount: parseFloat(tempTarget)
-      });
-      loadData();
-      closeModal();
-    } catch (error) { alert("Erro ao editar meta."); }
-  }
-
-  async function confirmDelete() {
-    try {
-      await api.delete(`/goals/${selectedGoal.id}`);
-      loadData();
-      closeModal();
-    } catch (error) { alert("Erro ao excluir meta."); }
-  }
-
-  // Funções de criação normais
-  async function handleSaveTransaction(formData) {
-    try {
-      await api.post('/transactions', { ...formData, amount: parseFloat(formData.amount) });
-      loadData();
-    } catch (error) { alert('Erro ao salvar transação'); }
-  }
-
-  async function handleAddGoal(goalData) {
-    try {
-      await api.post('/goals', { ...goalData, targetAmount: parseFloat(goalData.targetAmount) });
-      loadData();
-    } catch (error) { alert('Erro ao criar meta'); }
-  }
+  const criticalAlerts = data?.budgetAlerts?.filter((b) => b.status !== 'OK') || [];
 
   return (
-    <>
-      <Navbar />
-
-      <div className="container">
-        <div style={{marginBottom: '20px'}}>
-           <h2>Resumo Geral</h2>
-        </div>
-
-        <KPIs summary={summary} indicators={indicators} />
-
-        <div className="main-grid">
-          <div className="left-column">
-            <FinancialChart summary={summary} />
-            <TransactionForm onSave={handleSaveTransaction} />
-          </div>
-
-          <div className="right-column">
-            <GoalsSection 
-              goals={goals} 
-              onAddGoal={handleAddGoal} 
-              onAddMoney={openAddMoneyModal} 
-              onDeleteGoal={openDeleteModal} 
-              onEditGoal={openEditModal}
-            />
-            <TransactionHistory transactions={transactions} />
-          </div>
-        </div>
-
-        <GlobalHistory transactions={globalTransactions} />
-
-        {/* --- MODAIS --- */}
-
-        <Modal 
-          isOpen={activeModal === 'ADD_MONEY'} 
-          onClose={closeModal} 
-          title={`Investir em: ${selectedGoal?.title}`}
-        >
-          <p>Quanto você deseja adicionar a esta meta?</p>
-          <input 
-            type="number" placeholder="Valor (R$)" 
-            value={tempAmount} onChange={e => setTempAmount(e.target.value)}
-            style={{width: '100%', marginTop: '10px'}} autoFocus
-          />
-          <div className="modal-actions">
-            <button onClick={closeModal} className="btn-cancel">Cancelar</button>
-            <button onClick={confirmAddMoney} className="btn-confirm">Confirmar</button>
-          </div>
-        </Modal>
-
-        <Modal 
-          isOpen={activeModal === 'EDIT'} 
-          onClose={closeModal} 
-          title="Editar Meta"
-        >
-          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            <label>Nome da Meta</label>
-            <input type="text" value={tempTitle} onChange={e => setTempTitle(e.target.value)} />
-            <label>Valor Alvo (Meta)</label>
-            <input type="number" value={tempTarget} onChange={e => setTempTarget(e.target.value)} />
-          </div>
-          <div className="modal-actions">
-            <button onClick={closeModal} className="btn-cancel">Cancelar</button>
-            <button onClick={confirmEdit} className="btn-confirm">Salvar</button>
-          </div>
-        </Modal>
-
-        <Modal 
-          isOpen={activeModal === 'DELETE'} 
-          onClose={closeModal} 
-          title="Excluir Meta"
-        >
-          <p>Tem certeza que deseja excluir a meta <strong>{selectedGoal?.title}</strong>?</p>
-          <div className="modal-actions">
-            <button onClick={closeModal} className="btn-cancel">Cancelar</button>
-            <button onClick={confirmDelete} className="btn-danger">Excluir</button>
-          </div>
-        </Modal>
-
+    <Layout title="Visão Geral" onQuickNewTransaction={() => setModalOpen(true)}>
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <select className="select" style={{ width: 150 }} value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          {Array.from({ length: 12 }, (_, i) => (
+            <option key={i + 1} value={i + 1}>
+              {new Date(2026, i, 1).toLocaleString('pt-BR', { month: 'long' })}
+            </option>
+          ))}
+        </select>
+        <input
+          className="input"
+          style={{ width: 110 }}
+          type="number"
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+        />
       </div>
-    </>
+
+      {criticalAlerts.length > 0 && (
+        <div className="card" style={{ borderColor: 'var(--warning)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--warning)', fontWeight: 700 }}>
+            <AlertTriangle size={18} /> Alertas de Orçamento Mensal
+          </div>
+          {criticalAlerts.map((al) => (
+            <div key={al.id} style={{ fontSize: '0.88rem' }}>
+              <strong>{al.categoryName}:</strong> {al.percentage}% utilizado (R$ {al.spent.toFixed(2)} de R$ {al.limit.toFixed(2)})
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="grid-kpi">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton" style={{ height: 118 }} />
+          ))}
+        </div>
+      ) : (
+        <>
+          <KPIs kpis={data?.kpis} />
+          <FinancialChart
+            monthlySeries={data?.monthlySeries}
+            expensesByCategory={data?.expensesByCategory}
+          />
+
+          <div className="grid-2">
+            <div className="card">
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.9rem' }}>Minhas Carteiras</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {data?.accounts?.map((acc) => (
+                  <div
+                    key={acc.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 10,
+                      border: '1px solid var(--border-color)',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{acc.name}</span>
+                    <span style={{ fontWeight: 700, color: acc.balance >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                      {acc.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card">
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.9rem' }}>Últimos Lançamentos</h3>
+              <div className="table-wrapper">
+                <table>
+                  <tbody>
+                    {data?.recentTransactions?.map((t) => (
+                      <tr key={t.id}>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{t.description}</div>
+                          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            {new Date(t.date).toLocaleDateString('pt-BR')} • {t.categoryRel?.name || t.category}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: t.type === 'INCOME' ? 'var(--success)' : 'var(--danger)' }}>
+                          {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      <TransactionForm
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSaved={loadDashboard}
+      />
+    </Layout>
   );
 }

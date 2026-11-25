@@ -1,81 +1,50 @@
+import { useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
-import { useContext } from 'react';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 
-// Importação das Páginas
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
+import BudgetsGoalsPage from './pages/BudgetsGoalsPage';
+import SettingsPage from './pages/SettingsPage';
 
-/**
- * Componente de Proteção de Rotas.
- * - Se estiver carregando a sessão: Mostra tela de loading.
- * - Se não estiver logado: Redireciona para /login.
- * - Se logado: Renderiza a página solicitada (children).
- */
 const Private = ({ children }) => {
   const { authenticated, loading } = useContext(AuthContext);
 
   if (loading) {
     return (
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        color: 'var(--primary)',
-        fontWeight: 'bold'
-      }}>
-        Carregando sistema...
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 600 }}>
+        Validando sessão...
       </div>
     );
   }
 
-  if (!authenticated) {
-    return <Navigate to="/login" />;
-  }
-
-  return children;
+  return authenticated ? children : <Navigate to="/login" replace />;
 };
 
-/**
- * Componente Raiz da Aplicação.
- * Gerencia o Roteamento e o Contexto Global de Autenticação.
- */
-function App() {
+export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          
-          {/* === Rotas Públicas === */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          {/* === Rotas Privadas (Requer Login) === */}
-          <Route 
-            path="/" 
-            element={
-              <Private>
-                <DashboardPage />
-              </Private>
-            } 
-          />
-          
-          <Route 
-            path="/transactions" 
-            element={
-              <Private>
-                <TransactionsPage />
-              </Private>
-            } 
-          />
-          
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+
+              <Route path="/" element={<Private><DashboardPage /></Private>} />
+              <Route path="/transactions" element={<Private><TransactionsPage /></Private>} />
+              <Route path="/planning" element={<Private><BudgetsGoalsPage /></Private>} />
+              <Route path="/settings" element={<Private><SettingsPage /></Private>} />
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
-
-export default App;

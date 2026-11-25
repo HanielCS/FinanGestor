@@ -7,49 +7,141 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Modelo de Usuário para autenticação no sistema
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String
-  transactions Transaction[] // Relação: Um usuário tem muitas transações
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  transactions  Transaction[]
+  goals         Goal[]
+  accounts      Account[]
+  categories    Category[]
+  budgets       Budget[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
 
   @@map("users")
 }
 
-/// Transações financeiras (Receitas e Despesas)
-model Transaction {
-  id          Int      @id @default(autoincrement())
-  type        String   // 'INCOME' ou 'EXPENSE'
-  
-  // Define precisão monetária: até 10 dígitos, sendo 2 casas decimais
-  amount      Decimal  @db.Decimal(10, 2) 
-  
-  category    String   // Ex: 'SALARIO', 'ALUGUEL', 'INVESTIMENTO'
-  description String
-  date        DateTime @default(now())
-  notes       String?
-  createdAt   DateTime @default(now())
-  
-  // Relacionamento com o Usuário (Dono da transação)
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
 
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Account {
+  id           Int           @id @default(autoincrement())
+  name         String
+  type         String        @default("CHECKING") // CHECKING, CREDIT_CARD, CASH, SAVINGS
+  balance      Decimal       @default(0) @db.Decimal(12, 2)
+  color        String        @default("#6366f1")
+  userId       Int
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Category {
+  id           Int           @id @default(autoincrement())
+  name         String
+  type         String        // 'INCOME' ou 'EXPENSE'
+  color        String        @default("#3b82f6")
+  icon         String        @default("Tag")
+  userId       Int
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, name, type])
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id                Int       @id @default(autoincrement())
+  type              String    // 'INCOME' ou 'EXPENSE'
+  amount            Decimal   @db.Decimal(10, 2)
+  category          String    // Retrocompatibilidade com registros legados
+  description       String
+  date              DateTime  @default(now())
+  notes             String?
+  isRecurring       Boolean   @default(false)
+  installmentGroup  String?
+  installmentNumber Int?
+  installmentTotal  Int?
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accountId         Int?
+  account           Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  categoryId        Int?
+  categoryRel       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, date])
+  @@index([userId, deletedAt])
   @@map("transactions")
 }
 
-/// Metas Financeiras Globais (Compartilhadas entre todos os usuários)
 model Goal {
   id            Int       @id @default(autoincrement())
   title         String
-  
-  // Define precisão monetária para as metas também
   targetAmount  Decimal   @db.Decimal(10, 2)
-  currentAmount Decimal   @db.Decimal(10, 2) @default(0)
-  
+  currentAmount Decimal   @default(0) @db.Decimal(10, 2)
   deadline      DateTime?
-  status        String    @default("PENDING")
+  status        String    @default("PENDING") // PENDING, COMPLETED
+  createdAt     DateTime  @default(now())
 
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@map("goals")
+}
+
+model Budget {
+  id         Int      @id @default(autoincrement())
+  amount     Decimal  @db.Decimal(10, 2)
+  month      Int
+  year       Int
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId, month, year])
+  @@map("budgets")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  metadata  String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("audit_logs")
 }

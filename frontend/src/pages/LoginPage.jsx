@@ -1,75 +1,53 @@
-import { useState, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
-/**
- * Tela de Login.
- * Gerencia a autenticação do usuário e redirecionamento para o Dashboard.
- */
 export default function LoginPage() {
   const { login } = useContext(AuthContext);
+  const { addToast } = useToast();
   const navigate = useNavigate();
-  
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    setLoading(true);
     try {
-      await login(form.email, form.password);
+      await login(email, password);
       navigate('/');
-    } catch (error) {
-      alert(error.response?.data?.error || 'Erro ao fazer login. Verifique suas credenciais.');
-      setIsLoading(false);
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Falha ao autenticar.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="auth-container">
-      <div className="card">
-        <h2 className="auth-title">Login FinanGestor</h2>
-        
-        <form onSubmit={handleSubmit} className="form-card">
-          <div className="input-group">
-            <label htmlFor="email">E-mail</label>
-            <input 
-              id="email"
-              type="email" 
-              value={form.email} 
-              onChange={e => setForm({...form, email: e.target.value})} 
-              required 
-              placeholder="seu@email.com"
-              autoComplete="email"
-            />
+      <div className="card auth-card">
+        <h2 style={{ marginBottom: '0.35rem' }}>FinanGestor</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
+          Acesse sua gestão financeira pessoal
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div className="form-group">
+            <label className="form-label">E-mail</label>
+            <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          
-          <div className="input-group">
-            <label htmlFor="password">Senha</label>
-            <input 
-              id="password"
-              type="password" 
-              value={form.password} 
-              onChange={e => setForm({...form, password: e.target.value})} 
-              required 
-              placeholder="••••••"
-              autoComplete="current-password"
-            />
+          <div className="form-group">
+            <label className="form-label">Senha</label>
+            <input className="input" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          
-          <button 
-            type="submit" 
-            className="auth-btn" 
-            disabled={isLoading}
-            style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'wait' : 'pointer' }}
-          >
-            {isLoading ? 'Entrando...' : 'Entrar'}
+          <button className="btn btn-primary" type="submit" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
 
-        <p className="auth-footer">
-          Não tem conta? <Link to="/register">Cadastre-se</Link>
+        <p style={{ marginTop: '1rem', fontSize: '0.85rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          Não possui conta? <Link to="/register" style={{ color: 'var(--primary)' }}>Cadastre-se</Link>
         </p>
       </div>
     </div>

@@ -1,48 +1,43 @@
 import 'dotenv/config';
 import express from 'express';
+import helmet from 'helmet';
 import cors from 'cors';
-import routes from './routes.js';
+import cookieParser from 'cookie-parser';
+import routes from './src/routes/index.js';
+import { apiRateLimiter } from './src/middlewares/rateLimiter.js';
+import { errorHandler } from './src/middlewares/errorHandler.js';
 
 const app = express();
+const PORT = process.env.PORT || 3001;
 
-// --- MIDDLEWARES ---
+app.use(helmet());
 
-// Habilita CORS (Permite que o Frontend acesse este Backend)
-// Em produção, você poderia restringir: app.use(cors({ origin: 'https://seu-site.com' }));
-app.use(cors());
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim());
 
-// Habilita o servidor para entender JSON no corpo das requisições
-app.use(express.json());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Bloqueado pela política CORS.'));
+    },
+    credentials: true,
+  })
+);
 
-// --- ROTAS ---
+app.use(cookieParser());
+app.use(express.json({ limit: '2mb' }));
+app.use('/api', apiRateLimiter, routes);
 
-// Rota Raiz (Health Check) - Útil para verificar se o servidor está vivo
-app.get('/', (req, res) => {
-  res.send('API FinanGestor está rodando com sucesso!');
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Importa todas as rotas da aplicação (Transações, Metas, Auth)
-app.use(routes);
-
-// --- TRATAMENTO DE ERROS GLOBAIS ---
-
-// Middleware para rotas não encontradas (404)
-app.use((req, res, next) => {
-  res.status(404).json({ error: 'Rota não encontrada.' });
-});
-
-// Middleware para erros internos (500) - Evita que o servidor pare
-app.use((error, req, res, next) => {
-  console.error("Erro interno do servidor:", error);
-  res.status(500).json({ error: 'Ocorreu um erro interno no servidor.' });
-});
-
-// --- INICIALIZAÇÃO ---
-
-// Usa a porta definida na nuvem (process.env.PORT) ou 3000 se estiver local
-const PORT = process.env.PORT || 3000;
+app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`pid: ${process.pid}`);
+  console.log(`FinanGestor API v2 rodando na porta ${PORT}`);
 });

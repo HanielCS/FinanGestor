@@ -1,162 +1,35 @@
-# 💰 FinanGestor
+# 💰 FinanGestor v2.0
 
-FinanGestor é uma aplicação web completa para gestão financeira pessoal e empresarial.
-O sistema permite o controle de receitas e despesas, visualização de indicadores financeiros (KPIs), gerenciamento de metas globais e histórico detalhado de transações.
+Aplicação full-stack para gestão financeira pessoal com arquitetura modular, segurança reforçada (Access + Refresh Token rotativo em cookie `HttpOnly`), suporte a múltiplas carteiras, categorias personalizadas, orçamentos mensais com alertas, lançamentos parcelados/recorrentes, importação OFX/CSV e tema Claro/Escuro.
 
-## 🚀 Funcionalidades
+## 🔒 Melhorias de Segurança Implementadas
 
-### 🔐 Autenticação Segura
+- **Autenticação em Duas Camadas:** Access Token JWT de curta duração (15 min) mantido apenas em memória no frontend + Refresh Token rotativo (7 dias) armazenado em cookie `HttpOnly` com detecção de reuso de token.
+- **Proteção contra Força Bruta:** `express-rate-limit` dedicado nas rotas `/api/auth/login` e `/api/auth/register`.
+- **Validação Estrita com Zod:** Bloqueio de *mass assignment* e validação de tipos, valores monetários e datas antes dos controllers.
+- **Hardening HTTP & Multi-Tenant:** Headers de segurança com `helmet`, política CORS restrita com credenciais e isolamento estrito por `userId` em todas as consultas (incluindo metas financeiras).
+- **Auditoria & Soft Delete:** Registro de eventos críticos de autenticação em `audit_logs` e lixeira com restauração de transações (`deletedAt`).
 
-Cadastro e login
+## 🚀 Como Rodar Localmente
 
-Criptografia de senha
+### 1. Configurar o Backend
 
-Autenticação via JWT
-
-### 📊 Dashboard Interativo
-
-Indicadores: Saldo Líquido, Margem Líquida, ROI
-
-Gráfico de fluxo de caixa (Entradas vs Saídas)
-
-### 💼 Gestão de Transações
-
-CRUD de transações
-
-Categorias (Salário, Aluguel, Investimentos etc.)
-
-Filtro de histórico pessoal e global
-
-### 🎯 Metas Financeiras
-
-Sistema de metas globais
-
-Barra de progresso visual
-
-Adicionar fundos, editar e excluir metas
-
-### 📱 Interface Responsiva
-
-Design moderno e adaptado para todos os dispositivos
-
-## 🛠️ Tecnologias Utilizadas
-
-### Frontend
-
-React (Vite)
-
-CSS Modules
-
-Recharts
-
-Lucide React
-
-Axios
-
-### Backend
-
-Node.js
-
-Express
-
-Prisma ORM
-
-PostgreSQL (Neon.tech)
-
-JWT & Bcrypt
-
-## 📦 Pré-requisitos
-
-Node.js v18+
-
-Git
-
-Conta no Neon.tech (ou outro serviço PostgreSQL)
-
-## 🔧 Como Rodar o Projeto Localmente
-
-1️⃣ Clonar o repositório
-
-```bash
-git clone https://github.com/SEU_USUARIO/finangestor.git
-cd finangestor
-```
-
-2️⃣ Configurar o Backend
-
-Entrar na pasta backend e instalar dependências:
 ```bash
 cd backend
 npm install
-```
-Criar o arquivo .env:
-
-```bash
-# URL de conexão com o PostgreSQL (Exemplo Neon)
-DATABASE_URL="postgresql://usuario:senha@host:5432/banco?sslmode=require"
-
-# Porta do Servidor (Opcional)
-PORT=3000
-```
-Rodar as migrações:
-
-```bash
-npx prisma migrate dev --name init
-```
-Iniciar o backend:
-
-```bash
+cp .env.example .env
+# Preencha DATABASE_URL, JWT_ACCESS_SECRET e JWT_REFRESH_SECRET no arquivo .env
+npx prisma migrate dev --name security_and_multitenant_v2
 npm run dev
 ```
-Backend rodando em:
+
+### 2. Configurar o Frontend
 
 ```bash
-http://localhost:3000
-```
-
-3️⃣ Configurar o Frontend
-
-```bash
-cd ../frontend
+cd frontend
 npm install
-```
-(Opcional) Criar .env:
-
-```bash
-VITE_API_URL="http://localhost:3000"
-```
-Iniciar o projeto:
-
-```bash
+cp .env.example .env
 npm run dev
 ```
-Frontend disponível em:
 
-```bash
-http://localhost:5173
-```
-## 📂 Estrutura do Projeto
-
-```bash
-finangestor/
-├── backend/
-│   ├── controllers/     # Regras de negócio
-│   ├── middlewares/     # Autenticação JWT
-│   ├── prisma/          # Schema e migrations
-│   ├── routes.js        # Rotas da API
-│   └── index.js         # Inicialização do servidor
-│
-└── frontend/
-    ├── src/
-    │   ├── components/  # Navbar, Cards, Modal, etc.
-    │   ├── context/     # Estado global (Auth)
-    │   ├── pages/       # Páginas: Dashboard, Login...
-    │   └── styles/      # CSS Modules
-```
-## 🌍 Deploy (Hospedagem)
-
-Banco de Dados: Neon.tech (PostgreSQL)
-
-Backend: Render.com
-
-Frontend: Vercel
+Acesse `http://localhost:5173`.

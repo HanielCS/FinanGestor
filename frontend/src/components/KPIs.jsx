@@ -1,58 +1,61 @@
-import { DollarSign, PieChart, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, PiggyBank } from 'lucide-react';
 
-/**
- * Exibe os cartões de indicadores principais (Cards do topo).
- * Mostra Saldo, Margem e ROI com formatação visual de cores.
- */
-export default function KPIs({ 
-  summary = { balance: 0 }, 
-  indicators = { netMargin: '0%', roi: '0%' } 
-}) {
-  
-  const balance = Number(summary.balance);
-  
-  // Remove o símbolo de % para verificar se é negativo
-  const roiValue = parseFloat(indicators.roi?.replace('%', '') || 0);
+const formatBRL = (v) =>
+  Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Helper para formatar moeda (BRL)
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(val);
-  };
+export default function KPIs({ kpis }) {
+  if (!kpis) return null;
+
+  const cards = [
+    {
+      label: 'Saldo Consolidado (Contas)',
+      value: formatBRL(kpis.totalConsolidatedBalance),
+      sub: `Saldo do mês: ${formatBRL(kpis.balance)}`,
+      icon: Wallet,
+      color: 'var(--primary)',
+    },
+    {
+      label: 'Receitas do Mês',
+      value: formatBRL(kpis.income),
+      sub: `${kpis.incomeChangePct >= 0 ? '+' : ''}${kpis.incomeChangePct}% vs mês anterior`,
+      icon: ArrowUpRight,
+      color: 'var(--success)',
+    },
+    {
+      label: 'Despesas do Mês',
+      value: formatBRL(kpis.expense),
+      sub: `${kpis.expenseChangePct >= 0 ? '+' : ''}${kpis.expenseChangePct}% vs mês anterior`,
+      icon: ArrowDownRight,
+      color: 'var(--danger)',
+    },
+    {
+      label: 'Taxa de Economia',
+      value: `${kpis.savingsRate}%`,
+      sub: kpis.savingsRate >= 20 ? 'Meta saudável atingida' : 'Recomendado: acima de 20%',
+      icon: PiggyBank,
+      color: 'var(--warning)',
+    },
+  ];
 
   return (
-    <div className="kpi-section">
-      <h2>Indicadores Financeiros</h2>
-      
-      <div className="summary-grid">
-        
-        {/* Card 1: Saldo Líquido */}
-        <div className="card">
-          <h3><DollarSign size={18} className="text-blue"/> Saldo Líquido</h3>
-          <div className={`value ${balance >= 0 ? 'text-blue' : 'text-red'}`}>
-            {formatCurrency(balance)}
+    <div className="grid-kpi">
+      {cards.map((c) => {
+        const Icon = c.icon;
+        return (
+          <div className="card" key={c.label}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {c.label}
+              </span>
+              <Icon size={19} color={c.color} />
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+              {c.value}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{c.sub}</div>
           </div>
-        </div>
-
-        {/* Card 2: Margem Líquida */}
-        <div className="card">
-          <h3><PieChart size={18} className="text-muted"/> Margem Líquida</h3>
-          <div className="value" style={{ color: 'var(--text)' }}>
-            {indicators.netMargin || '0%'}
-          </div>
-        </div>
-
-        {/* Card 3: ROI */}
-        <div className="card">
-          <h3><TrendingUp size={18} className="text-green"/> ROI (Investimentos)</h3>
-          <div className={`value ${roiValue >= 0 ? 'text-green' : 'text-red'}`}>
-            {indicators.roi || '0%'}
-          </div>
-        </div>
-
-      </div>
+        );
+      })}
     </div>
   );
 }
